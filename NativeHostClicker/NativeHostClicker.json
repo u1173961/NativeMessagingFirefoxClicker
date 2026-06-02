@@ -1,0 +1,7 @@
+{
+  "name": "NativeHostClicker",
+  "description": "host for native messaging",
+  "path": "<install_path>\\NativeHostClicker\\NativeHostClicker.bat",
+  "type": "stdio",
+  "allowed_extensions": [ "example@rex.com" ]
+}

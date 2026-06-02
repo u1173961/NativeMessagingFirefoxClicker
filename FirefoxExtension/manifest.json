@@ -1,0 +1,31 @@
+{
+  "manifest_version": 2,
+  "name": "Skipper",
+  "version": "1.1",
+
+  "description": "Automatically mutes & skips adverts for a certain site",
+
+  "icons": {
+    "48": "icons/48.png",
+    "96": "icons/96.png"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["*://*.<certain_site>.com/*"],
+      "js": ["skipper.js"]
+    }
+  ],
+  
+  "applications": {
+    "gecko": {
+      "id": "example@rex.com"
+    }
+  },
+
+  "background": {
+    "scripts": ["background.js"]
+  },
+
+  "permissions": ["nativeMessaging"]
+}
