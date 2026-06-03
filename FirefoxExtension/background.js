@@ -1,42 +1,63 @@
-/*
-On startup, connect to the "NativeHostClicker" app.
-*/
-console.log('Connecting to NativeHostClicker');
-let port = browser.runtime.connectNative("NativeHostClicker");
+console.log("example@rex.com background loaded");
 
-/*
-Listen for messages from the app and log them to the console.
-*/
-port.onMessage.addListener((response) => {
-	console.log("example@rex.com background.js received: " + response);
-});
-
-/*
-Listen for the native messaging port closing.
-*/
-port.onDisconnect.addListener((port) => {
-  if (port.error) {
-    console.log(`example@rex.com disconnected due to an error: ${port.error.message}`);
-  } else {
-    // The port closed for an unspecified reason. If this occurred right after
-    // calling `browser.runtime.connectNative()` there may have been a problem
-    // starting the native messaging client in the first place.
-    // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_messaging#troubleshooting
-    console.log(`example@rex.com background.js disconnected`, port);
-  }
-});
+let port = null;
+let attempted = false;
 
 browser.runtime.onMessage.addListener((msg) => {
-  if (msg.type === "nativeClick" && msg.app_key) {
-    console.log("Sending to example@rex.com native host");		
-    port.postMessage({
-        type: "click",
-        app_key: 1,
-        x: msg.x,
-        y: msg.y
-    });
-  } else {
+	console.log("background received:", msg);
+	if (!(msg.type === "nativeClick" && msg.app_key)) {
     console.log("example@rex.com: unexpected onMessage()");
-    console.log(msg);
-  }
+		return Promise.resolve({ ok: false, error: "Unexpected message" });
+	}
+
+	try {
+		if (!attempted) {
+      connect();
+      if (!port) {
+        console.log("example@rex.com native host is not connected");
+        return;
+      }
+			attempted = true;
+
+      console.log("Sending to example@rex.com native host");
+			port.postMessage({
+				type: "click",
+				app_key: 1,
+				x: msg.x,
+				y: msg.y
+			});
+			setTimeout(function () {
+				attempted = false;
+			}, 1000);
+		}
+		return Promise.resolve({ ok: true });
+	} catch (e) {
+		console.error("native click failed:", e);
+			setTimeout(function () {
+				attempted = false;
+			}, 3500);
+		return Promise.resolve({ ok: false, error: String(e) });
+	}
 });
+
+function connect() {
+  if (!port) {
+    console.log("Connecting to NativeHostClicker");
+    port = browser.runtime.connectNative("NativeHostClicker");
+
+    port.onMessage.addListener((response) => {
+      console.log("example@rex.com background.js received:", response);
+    });
+
+    port.onDisconnect.addListener((disconnectedPort) => {
+      if (disconnectedPort.error) {
+        console.log(`example@rex.com disconnected due to an error: ${disconnectedPort.error.message}`);
+      } else {
+        // If this happens right after connectNative(), Firefox probably could not
+        // find, launch, or authorize the native messaging host.
+        console.log("example@rex.com background.js disconnected", disconnectedPort);
+      }
+        port = null;
+      });
+  }
+}

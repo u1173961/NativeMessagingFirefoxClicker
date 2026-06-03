@@ -20,7 +20,7 @@ NativeHostClicker/
 
 ### 1. Install Python
 
-Install Python 3 for Windows from <https://www.python.org/downloads/windows/>.
+Install Python 3 for Windows from the Microsoft store (run python without arguments from terminal) or from <https://www.python.org/downloads/windows/>.
 
 During install, enable **Add python.exe to PATH**.
 
@@ -62,24 +62,16 @@ Example:
 }
 ```
 
-Edit `NativeHostClicker\NativeHostClicker.bat` and replace `<install_path>` with the same project folder.
-
 Edit `FirefoxExtension\manifest.json` and replace `<certain_site>` with a hopefully obvious sitename beginning with y.
 
-Example:
+The batch file is self-locating and should not need path edits. It runs `NativeHostClicker.py` from the same folder:
 
 ```bat
 @echo off
+setlocal
 
-call python C:\Tools\NativeMessagingFirefoxClicker\NativeHostClicker\NativeHostClicker.py
-```
-
-If your Windows Python command is `py` instead of `python`, use this instead:
-
-```bat
-@echo off
-
-call py C:\Tools\NativeMessagingFirefoxClicker\NativeHostClicker\NativeHostClicker.py
+set "SCRIPT_DIR=%~dp0"
+set "PYTHON_CMD=python"
 ```
 
 ### 4. Register the native messaging host
@@ -129,9 +121,12 @@ python -c "import pyautogui; print('pyautogui ok')"
 
 ## Troubleshooting
 
+- **pyautogui fails to install**: pip can be flaky; update with `python -m pip install --upgrade pip` and re-run `python -m pip install pyautogui` until success.
 - **Firefox cannot find the native host**: confirm the registry default value points to the full path of `NativeHostClicker.json`.
 - **Firefox cannot start the host**: confirm `NativeHostClicker.json` points to the full path of `NativeHostClicker.bat`.
-- **Python is not found**: edit `NativeHostClicker.bat` to use the Python command that works on your machine, usually `python` or `py`.
+- **`Attempt to postMessage on disconnected port`**: the native host disconnected before the extension sent a message. Check the Browser Console for the earlier native messaging error, then verify the registry path, the `.json` host path, the `.bat` Python command, and the extension ID in `allowed_extensions`.
+- **`An unexpected error occurred` after sending to the native host**: the host started, received a message, then crashed or exited. Check `NativeHostClicker\NativeHostClicker.launcher.log`, `NativeHostClicker\NativeHostClicker.stderr.log`, and `NativeHostClicker\NativeHostClicker.log` for the Python error.
+- **Python is not found**: the batch file tries `python` first, then `py`. If both fail, install Python and enable **Add python.exe to PATH**.
 - **The extension connects but messages are rejected**: confirm `FirefoxExtension\manifest.json` has the same ID as `allowed_extensions` in `NativeHostClicker.json`.
 - **Clicks do not occur**: confirm `pyautogui` is installed for the same Python interpreter used by `NativeHostClicker.bat`.
 
